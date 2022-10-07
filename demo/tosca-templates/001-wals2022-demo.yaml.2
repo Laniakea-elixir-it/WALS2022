@@ -1,0 +1,117 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports:
+  - indigo_custom_types: https://raw.githubusercontent.com/mtangaro/tosca-types/laniakea-galaxy/custom_types.yaml
+
+description: >
+  Launch a compute node getting the IP and SSH credentials to access via ssh
+
+topology_template:
+
+  inputs:
+
+    users:
+      type: list
+      description: list of users to create on the VM
+      entry_schema:
+        type: tosca.datatypes.indigo.User
+      default: []
+      required: false
+
+    # Virtual Hardware
+    instance_flavor:
+      type: string
+      description: instance flavor (num_cpu, memory, disk)
+      default: large
+    storage_size:
+      type: string
+      description: storage memory required for the instance
+    export_dir:
+      type: string
+      description: path to store galaxy data
+      default: /export
+
+    # Storage encryption
+    storage_encryption:
+      type: boolean
+      description: Enable storage encryption using Vault to store secrets and LUKS to encrypt
+      default: False
+      required: true
+    vault_encryption_token:
+      type: map
+      description: Vault write token for storage encryption
+      entry_schema:
+        type: tosca.datatypes.indigo.VaultToken
+      default: {}
+      required: false
+    vault_encryption_path:
+      type: string
+      description: Secret path for encryption passphrase
+      default: "sub/dep.uuid/storage_encryption"
+      required: false
+    vault_encryption_key:
+      type: string
+      description: Secret key for encryption passphrase
+      default: 'storage_encryption_key'
+      required: false
+
+  node_templates:
+
+    luks_encryption:
+      type: tosca.nodes.indigo.LuksEncryption
+      properties:
+        storage_encryption: { get_input: storage_encryption }
+        vault_encryption_token: { get_input: vault_encryption_token }
+        vault_encryption_path:  { get_input: vault_encryption_path }
+        vault_encryption_key:  { get_input: vault_encryption_key }
+      requirements:
+        - host: simple_node
+
+    simple_node:
+      type: tosca.nodes.indigo.Compute
+      properties:
+        os_users: { get_input: users }
+      capabilities:
+        endpoint:
+          properties:
+            network_name: PUBLIC
+            private_ip: false
+            ports:
+              luks_api_port:
+                protocol: tcp
+                source: 5000
+        scalable:
+          properties:
+            count: 1
+        host:
+          properties:
+            instance_type: { get_input: instance_flavor }
+        os:
+          properties:
+            distribution: centos
+            version: 7
+      requirements:
+        - local_storage:
+            node: my_block_storage
+            capability: tosca.capabilities.Attachment
+            relationship:
+              type: tosca.relationships.AttachesTo
+              properties:
+                location: /export
+                location: { get_input: export_dir }
+                device: hdb
+
+    my_block_storage:
+      type: tosca.nodes.BlockStorage
+      properties:
+        size: { get_input: storage_size }
+
+  outputs:
+    endpoint:
+      value: { get_attribute: [ simple_node, public_address, 0 ] }
+    node_ip:
+      value: { get_attribute: [ simple_node, public_address, 0 ] }
+    node_creds:
+      value: { get_attribute: [ simple_node, endpoint, credential, 0 ] }
+    os_users:
+      value: { get_property: [ simple_node, os_users, 0 ] }

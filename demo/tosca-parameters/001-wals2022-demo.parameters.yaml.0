@@ -1,0 +1,9 @@
+inputs:
+
+  users:
+    type: ssh_user
+
+outputs:
+
+  os_users:
+    type: ssh_user

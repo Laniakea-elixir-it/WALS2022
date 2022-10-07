@@ -1,0 +1,104 @@
+# Set here the list of the tabs to be displayed
+tabs: [ "Virtual hardware", "Galaxy"]
+
+inputs:
+
+  instance_flavor:
+    display_name: "Instance flavour"
+    type: "select"
+    description: "CPUs, memory size (RAM), root disk size"
+    constraints:
+      - { value: "medium", label: "Medium (2 cpu, 4 GB RAM, 20 GB dsk)" }
+      - { value: "large", label: "Large (4 cpu, 8 GB RAM, 20 GB dsk)" }
+      - { value: "xlarge", label: "Large (8 cpu, 16 GB RAM, 20 GB dsk)" }
+      - { value: "xxlarge", label: "Large (16 cpu, 32 GB RAM, 20 GB dsk)" }
+    tab: "Virtual hardware"
+
+  storage_size:
+    display_name: "Storage volume size"
+    type: "select"
+    description: "Select storage size"
+    constraints:
+      - { value: "50 GB", label: "50 GB" }
+      - { value: "100 GB", label: "100 GB" }
+    tab: "Virtual hardware"
+
+  export_dir:
+    default: /export
+    type: hidden
+
+  # Storage encryption
+  storage_encryption:
+    display_name: "Enable encryption"
+    type: "toggle"
+    description: "Encrypt instance external storage"
+    constraints:
+      - { value: "True", label: "On" }
+    tab: "Virtual hardware"
+  retrieve_passphrase_from_vault:
+    default: true
+    type: hidden
+  vault_encryption_token:
+    default: { "policy": "write" }
+    type: vault_token
+  vault_encryption_path:
+    type: hidden
+  vault_encryption_key:
+    default: 'storage_encryption_key'
+    type: hidden
+
+  # Galaxy section
+  version:
+    display_name: "Galaxy version"
+    type: "select"
+    description: "Galaxy release 20.05 recommended"
+    constraints:
+      - { value: "release_20.05", label: "Galaxy release 20.05" }
+    tab: "Galaxy"
+
+  instance_description:
+    display_name: "Instance description"
+    type: "text"
+    description: "Set Galaxy Brand"
+    default: "ELIXIR-ITALY"
+    tab: "Galaxy"
+
+  admin_email:
+    display_name: "Galaxy administrator e-mail"
+    type: "email"
+    description: "Type a valid e-mail address."
+    tab: "Galaxy"
+    required: yes
+
+  admin_api_key:
+    type: hidden
+    default: random
+
+  flavor:
+    display_name: "Galaxy flavours"
+    type: "select"
+    description: "Load Galaxy tools preset"
+    constraints:
+      - { value: "galaxy-minimal", label: "Galaxy minimal" }
+      - { value: "galaxy-testing", label: "Galaxy flavour test" }
+      - { value: "galaxy-pillar", label: "Galaxy Somatic Variant Detection" }
+      - { value: "galaxy-rna-workbench", label: "Galaxy RNA Workbench" }
+      - { value: "cov-19-test", label: "Galaxy COVID-19" }
+      - { value: "galaxy-CoVaCS", label: "Galaxy CoVaCS" }
+      - { value: "galaxy-epigen", label: "Galaxy Epigen" }
+      - { value: "galaxy-GDC_Somatic_Variant", label: "Galaxy GDC Somatic Variant" }
+      - { value: "galaxy-vinyl", label: "Galaxy Vinyl" }
+      - { value: "galaxy-testing-lite", label: "Galaxy flavour test lite" }
+    tab: "Galaxy"
+
+  enable_interactive_tools:
+    default: true
+    type: hidden
+
+  users:
+    type: ssh_user
+
+outputs:
+
+  os_users:
+    type: ssh_user
